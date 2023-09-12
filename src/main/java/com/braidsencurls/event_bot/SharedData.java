@@ -1,6 +1,8 @@
 package com.braidsencurls.event_bot;
 
 import com.braidsencurls.event_bot.commands.*;
+import com.braidsencurls.event_bot.entities.Event;
+import com.braidsencurls.event_bot.entities.User;
 import com.braidsencurls.event_bot.repositories.EventRepository;
 import com.braidsencurls.event_bot.repositories.EventRepositoryImpl;
 import org.reflections.Reflections;
@@ -11,20 +13,23 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SharedData {
+    public static final String COMMANDS_PACKAGE = "com.braidsencurls.event_bot.commands";
     private static SharedData instance = null;
     private Map<Long, String> state;
-    private Map<Long, Event> pendingEvents;
+    private Map<Long, Event> tempEvents;
     private Map<String, Command> commandRegistry;
+    private List<User> authorizedUsers;
     private static final Logger LOGGER = LoggerFactory.getLogger(SharedData.class);
     private static final EventRepository eventRepository = new EventRepositoryImpl();
 
     private SharedData() {
-        System.out.println("Instantiating.....");
+        LOGGER.debug("Instantiating SharedData");
         this.state = new HashMap<>();
-        this.pendingEvents = new ConcurrentHashMap<>();
+        this.tempEvents = new ConcurrentHashMap<>();
         this.commandRegistry = new HashMap<>();
+        this.authorizedUsers = new ArrayList<>();
 
-        //populateCommandRegistry();
+        registerCommands();
     }
 
     public static SharedData getInstance() {
@@ -38,29 +43,22 @@ public class SharedData {
         return state;
     }
 
-    public Map<Long, Event> getPendingEvents() {
-        return pendingEvents;
+    public Map<Long, Event> getTempEvents() {
+        return tempEvents;
     }
 
     public Map<String, Command> getCommandRegistry() {
-        //return this.commandRegistry;
-        commandRegistry.put("/start", new StartCommand());
-        commandRegistry.put("/createevent", new CreateEventCommand());
-        commandRegistry.put("/cancelevent", new CancelEventCommand());
-        commandRegistry.put("/listevents", new ListEventsCommand());
-        commandRegistry.put("/listattendees", new ListEventAttendeesCommand());
-        commandRegistry.put("/joinevent", new JoinEventCommand());
-        commandRegistry.put("/quitevent", new QuitEventCommand());
-        commandRegistry.put("/subscribetoevents", new SubscribeToNewEventsCommand());
-        commandRegistry.put("/unsubscribetoevents", new UnSubscribeToNewEventsCommand());
         return commandRegistry;
     }
 
-    private void populateCommandRegistry() {
+    public List<User> getAuthorizedUsers() {
+        return authorizedUsers;
+    }
+
+    private void registerCommands() {
         long start = System.currentTimeMillis();
         try {
-            String packageName = "com.braidsencurls.event_bot.commands";
-            Reflections reflections = new Reflections(packageName);
+            Reflections reflections = new Reflections(COMMANDS_PACKAGE);
 
             Set<Class<? extends Command>> implementations = reflections.getSubTypesOf(Command.class);
 

@@ -2,7 +2,7 @@ package com.braidsencurls.event_bot.repositories;
 
 import com.braidsencurls.event_bot.DateUtil;
 import com.braidsencurls.event_bot.DynamoDBClient;
-import com.braidsencurls.event_bot.Event;
+import com.braidsencurls.event_bot.entities.Event;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

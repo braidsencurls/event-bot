@@ -3,11 +3,8 @@ package com.braidsencurls.event_bot;
 import org.telegram.telegrambots.bots.TelegramWebhookBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.bots.AbsSender;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.function.Function;
 
 public class TelegramFactory {

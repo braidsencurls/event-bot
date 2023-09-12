@@ -14,6 +14,11 @@ public class StartCommand implements Command {
     }
 
     @Override
+    public boolean isUserAuthorized(String username) {
+        return true;
+    }
+
+    @Override
     public SendMessage execute(Update update) {
         LOGGER.info("Start Command is Triggered");
         return generateSendMessage(update.getMessage().getChatId(), "Hello There!");

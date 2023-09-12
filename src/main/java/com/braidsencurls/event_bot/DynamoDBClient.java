@@ -24,7 +24,7 @@ public class DynamoDBClient {
 
     private DynamoDbClient amazonDynamoDBClient() {
         return DynamoDbClient.builder()
-                .region(Region.of(System.getenv("region")))
+                .region(Region.of("ap-southeast-1"))
                 .build();
     }
 }

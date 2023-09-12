@@ -1,13 +1,13 @@
 package com.braidsencurls.event_bot.commands;
 
 import com.braidsencurls.event_bot.DateUtil;
-import com.braidsencurls.event_bot.Event;
+import com.braidsencurls.event_bot.entities.Event;
 import com.braidsencurls.event_bot.EventAction;
 import com.braidsencurls.event_bot.SharedData;
-import com.braidsencurls.event_bot.repositories.EventRepository;
-import com.braidsencurls.event_bot.repositories.EventRepositoryImpl;
-import com.braidsencurls.event_bot.repositories.EventSubscribersRepository;
-import com.braidsencurls.event_bot.repositories.EventSubscribersRepositoryImpl;
+import com.braidsencurls.event_bot.entities.User;
+import com.braidsencurls.event_bot.repositories.*;
+import com.braidsencurls.event_bot.services.UserService;
+import com.braidsencurls.event_bot.services.UserServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -26,12 +26,17 @@ public class ResponseCommand implements Command {
     private static final AbsSender SENDER = sender(getenv("bot_token"), getenv("bot_username"));
     private static final EventRepository eventRepository = new EventRepositoryImpl();
     private static final EventSubscribersRepository eventSubscriberRepository = new EventSubscribersRepositoryImpl();
+    private static final UserService userService = new UserServiceImpl(new UserRepositoryImpl());
 
     @Override
     public String getTextCommand() {
         return null;
     }
 
+    @Override
+    public boolean isUserAuthorized(String username) {
+        return true;
+    }
 
     @Override
     public SendMessage execute(Update update) {
@@ -44,19 +49,19 @@ public class ResponseCommand implements Command {
         switch (currentState) {
             case "DESCRIBE_EVENT": {
                 LOGGER.info("Will process DESCRIBE_EVENT");
-                SharedData.getInstance().getPendingEvents().get(chatId).setName(messageText);
+                SharedData.getInstance().getTempEvents().get(chatId).setName(messageText);
                 setNextState(chatId, "SET_EVENT_LOCATION");
                 return generateSendMessage(chatId, "Okay! Tell us some description for this event");
             }
             case "SET_EVENT_LOCATION": {
                 LOGGER.info("Will process SET_EVENT_LOCATION");
-                SharedData.getInstance().getPendingEvents().get(chatId).setDescription(messageText);
+                SharedData.getInstance().getTempEvents().get(chatId).setDescription(messageText);
                 setNextState(chatId, "SET_EVENT_DATE_TIME");
                 return generateSendMessage(chatId, "Cool! Where is this event going to happen?");
             }
             case "SET_EVENT_DATE_TIME": {
                 LOGGER.info("Will process SET_EVENT_DATE_TIME");
-                SharedData.getInstance().getPendingEvents().get(chatId).setLocation(messageText);
+                SharedData.getInstance().getTempEvents().get(chatId).setLocation(messageText);
                 setNextState(chatId, "EVENT_CREATED");
                 return generateSendMessage(chatId, "And when is it going to happen? " +
                         "Enter date in yyyy-mm-dd HH:mm (24-hour) format For example 2023-12-30 16:00?");
@@ -65,17 +70,17 @@ public class ResponseCommand implements Command {
                 LOGGER.info("Will process EVENT_CREATED");
                 try {
                     LocalDateTime dateTime = DateUtil.parseDateTime(messageText, DATE_TIME_24_HOUR);
-                    SharedData.getInstance().getPendingEvents().get(chatId).setDateTime(dateTime);
+                    SharedData.getInstance().getTempEvents().get(chatId).setDateTime(dateTime);
                     setNextState(chatId, null);
 
-                    Event completedEvent = SharedData.getInstance().getPendingEvents().get(chatId);
+                    Event completedEvent = SharedData.getInstance().getTempEvents().get(chatId);
                     completedEvent.setStatus("ACTIVE");
                     LOGGER.info("Event Id: " + completedEvent.getId());
 
                     //Save Event to Database
                     eventRepository.save(completedEvent);
                     //Remove Temporary Event
-                    SharedData.getInstance().getPendingEvents().remove(chatId);
+                    SharedData.getInstance().getTempEvents().remove(chatId);
 
                     new Thread(()-> {
                         notifyEventsSubscribers(EventAction.CREATED, completedEvent, username);
@@ -157,6 +162,27 @@ public class ResponseCommand implements Command {
                                 + String.join("\n", selectedEvent.getAttendees()));
                     }
                 }
+            }
+            case "GRANT_USER_ACCESS": {
+                LOGGER.info("Will Process GRANT_USER_ACCESS");
+                String[] textArr = messageText.split(" - ");
+                if(textArr.length != 2) {
+                    return generateSendMessage(chatId, "I'm sorry can you repeat that again." +
+                            "Follow the format <username> - <ADMIN/MEMBER>. For example, my_telegram_user - MEMBER");
+                } else {
+                    userService.addUser(textArr[0], textArr[1]);
+                    setNextState(chatId, null);
+                    return generateSendMessage(chatId, textArr[0] + " has been successfully granted an access ");
+                }
+            }
+            case "REVOKE_USER_ACCESS": {
+                LOGGER.info("Will Process REVOKE_USER_ACCESS");
+                if(userService.deleteUser(messageText)) {
+                    return generateSendMessage(chatId, messageText + " has been revoked an access");
+                }
+                return generateSendMessage(chatId, "Something went wrong! Make sure that "
+                        + messageText + " has been granted an access before." +
+                        "Try again. Enter the username you want to revoke an access");
             }
             default: {
                 LOGGER.info("Unable to process response");

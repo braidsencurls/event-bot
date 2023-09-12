@@ -1,5 +1,6 @@
-package com.braidsencurls.event_bot;
+package com.braidsencurls.event_bot.entities;
 
+import com.braidsencurls.event_bot.DateUtil;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.time.LocalDateTime;

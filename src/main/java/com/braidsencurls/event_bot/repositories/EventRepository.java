@@ -1,6 +1,6 @@
 package com.braidsencurls.event_bot.repositories;
 
-import com.braidsencurls.event_bot.Event;
+import com.braidsencurls.event_bot.entities.Event;
 import java.util.List;
 
 public interface EventRepository {

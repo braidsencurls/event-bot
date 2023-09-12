@@ -6,13 +6,14 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.braidsencurls.event_bot.commands.Command;
 import com.braidsencurls.event_bot.commands.ResponseCommand;
+import com.braidsencurls.event_bot.exceptions.UnauthorizedUserException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.bots.AbsSender;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.Map;
 
@@ -35,13 +36,15 @@ public class EventBotHandler implements RequestHandler<APIGatewayProxyRequestEve
             handleUpdate(update);
             response.setStatusCode(200);
         } catch (Exception e) {
-            LOGGER.error("Failed to send message: " + e);
             response.setStatusCode(500);
         }
         return response;
     }
 
-    private void handleUpdate(Update update) {
+    private void handleUpdate(Update update) throws TelegramApiException {
+        SendMessage sendMessage = new SendMessage();
+        Long chatId = update.getMessage().getChatId();
+
         try {
             LOGGER.info("Handle Update");
             if (update.getMessage() == null) {
@@ -49,18 +52,25 @@ public class EventBotHandler implements RequestHandler<APIGatewayProxyRequestEve
             }
 
             String text = update.getMessage().getText();
+            String username = update.getMessage().getChat().getUserName();
+
             Map<String, Command> commandRegistry = SharedData.getInstance().getCommandRegistry();
             Command command = commandRegistry.get(text);
-            Command responseCommand = new ResponseCommand();
-            SendMessage sendMessage = command != null ? command.execute(update)
-                    : responseCommand.execute(update);
+            command = command != null ? command : new ResponseCommand();
 
-            //Sending message
-            LOGGER.info("Sending message: " + sendMessage);
-            Message message = SENDER.execute(sendMessage);
-            LOGGER.info("Message sent: " + message);
+            command.isUserAuthorized(username);
+            sendMessage = command.execute(update);
+            SENDER.execute(sendMessage);
+        } catch (UnauthorizedUserException e) {
+            LOGGER.error("Unauthorized user access");
+            sendMessage.setChatId(chatId);
+            sendMessage.setText("I am sorry but you are not authorized to perform the command");
+            SENDER.execute(sendMessage);
         } catch (Exception e) {
             LOGGER.error("Failed to send message: " + e);
+            sendMessage.setChatId(chatId);
+            sendMessage.setText("Ouhhh noooo!! Some technical issues!");
+            SENDER.execute(sendMessage);
             throw new RuntimeException("Failed to send message!", e);
         }
     }

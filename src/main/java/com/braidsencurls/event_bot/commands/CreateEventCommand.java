@@ -1,7 +1,12 @@
 package com.braidsencurls.event_bot.commands;
 
-import com.braidsencurls.event_bot.Event;
+import com.braidsencurls.event_bot.entities.Event;
 import com.braidsencurls.event_bot.SharedData;
+import com.braidsencurls.event_bot.exceptions.NoUserFoundException;
+import com.braidsencurls.event_bot.exceptions.UnauthorizedUserException;
+import com.braidsencurls.event_bot.repositories.UserRepositoryImpl;
+import com.braidsencurls.event_bot.services.UserService;
+import com.braidsencurls.event_bot.services.UserServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -12,6 +17,7 @@ import java.util.UUID;
 public class CreateEventCommand implements Command {
 
     private static Logger LOGGER = LoggerFactory.getLogger(CreateEventCommand.class);
+    private UserService userService = new UserServiceImpl(new UserRepositoryImpl());
 
     @Override
     public String getTextCommand() {
@@ -28,11 +34,25 @@ public class CreateEventCommand implements Command {
         return generateSendMessage(chatId,"What is the event name?");
     }
 
+    @Override
+    public boolean isUserAuthorized(String username) {
+        try {
+            userService.findByUsername(username);
+            return true;
+        } catch (NoUserFoundException e) {
+            throw new UnauthorizedUserException("User is not authorized to perform this command");
+        }
+    }
+
     private static void addEvent(Long chatId, String username) {
         Event newEvent = new Event();
         String eventId = UUID.randomUUID().toString();
         newEvent.setId(eventId);
         newEvent.setOrganizer("@" + username);
-        SharedData.getInstance().getPendingEvents().put(chatId, newEvent);
+        saveTemporaryEvent(chatId, newEvent);
+    }
+
+    private static Event saveTemporaryEvent(Long chatId, Event newEvent) {
+        return SharedData.getInstance().getTempEvents().put(chatId, newEvent);
     }
 }
