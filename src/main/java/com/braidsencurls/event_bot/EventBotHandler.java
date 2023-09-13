@@ -21,7 +21,6 @@ import static com.braidsencurls.event_bot.TelegramFactory.sender;
 import static java.lang.System.getenv;
 
 public class EventBotHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
-
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final AbsSender SENDER = sender(getenv("bot_token"), getenv("bot_username"));
     private static final Logger LOGGER = LoggerFactory.getLogger(EventBotHandler.class);
@@ -36,7 +35,7 @@ public class EventBotHandler implements RequestHandler<APIGatewayProxyRequestEve
             handleUpdate(update);
             response.setStatusCode(200);
         } catch (Exception e) {
-            response.setStatusCode(500);
+            response.setStatusCode(200);
         }
         return response;
     }
@@ -56,7 +55,9 @@ public class EventBotHandler implements RequestHandler<APIGatewayProxyRequestEve
 
             Map<String, Command> commandRegistry = SharedData.getInstance().getCommandRegistry();
             Command command = commandRegistry.get(text);
-            command = command != null ? command : new ResponseCommand();
+            LOGGER.info("Is command null? " + (command == null));
+            command = command == null ? new ResponseCommand() :
+                    commandRegistry.get(text);
 
             command.isUserAuthorized(username);
             sendMessage = command.execute(update);

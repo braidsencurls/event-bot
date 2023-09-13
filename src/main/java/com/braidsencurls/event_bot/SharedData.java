@@ -5,7 +5,6 @@ import com.braidsencurls.event_bot.entities.Event;
 import com.braidsencurls.event_bot.entities.User;
 import com.braidsencurls.event_bot.repositories.EventRepository;
 import com.braidsencurls.event_bot.repositories.EventRepositoryImpl;
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +55,8 @@ public class SharedData {
     }
 
     private void registerCommands() {
-        long start = System.currentTimeMillis();
+        //TODO: Investigate why it take some time to scan
+        /*long start = System.currentTimeMillis();
         try {
             Reflections reflections = new Reflections(COMMANDS_PACKAGE);
 
@@ -70,7 +70,19 @@ public class SharedData {
             LOGGER.info("Scanning took: " + (System.currentTimeMillis() - start) + " ms");
         } catch (InstantiationException | IllegalAccessException e) {
             LOGGER.error("Failed to populate Command Registry");
-        }
+        }*/
+        commandRegistry.put("/start", new StartCommand());
+        commandRegistry.put("/createevent", new CreateEventCommand());
+        commandRegistry.put("/cancelevent", new CancelEventCommand());
+        commandRegistry.put("/listevents", new ListEventsCommand());
+        commandRegistry.put("/listattendees", new ListEventAttendeesCommand());
+        commandRegistry.put("/joinevent", new JoinEventCommand());
+        commandRegistry.put("/quitevent", new QuitEventCommand());
+        commandRegistry.put("/subscribetoevents", new SubscribeToNewEventsCommand());
+        commandRegistry.put("/unsubscribetoevents", new UnSubscribeToNewEventsCommand());
+        commandRegistry.put("/updateevent", new UpdateEventCommand());
+        commandRegistry.put("/grantuseraccess", new GrantUserAccessCommand());
+        commandRegistry.put("/revokeuseraccess", new RevokeUserAccessCommand());
     }
 
     public List<Event> getActiveEvents() {

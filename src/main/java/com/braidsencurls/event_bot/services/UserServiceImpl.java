@@ -13,24 +13,31 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class UserServiceImpl implements UserService {
-    private UserRepository userRepository;
+    private static UserRepository userRepository;
+
     public UserServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
+
     @Override
     public User findByUsername(String username) {
         //Check cache first
         User user = getUserFromCache(username);
+        user = getUserFromDatabase(username, user);
+        return user;
+
+    }
+
+    private User getUserFromDatabase(String username, User user) {
         if (user == null) {
-            LOGGER.info(username + " is not found in the cache. Will check the database");
+            LOGGER.info("Trying to find user from the database");
             user = userRepository.findByUsername(username);
             if (user != null) {
                 SharedData.getInstance().getAuthorizedUsers().add(user);
             }
         }
         return user;
-
     }
 
     private static User getUserFromCache(String username) {

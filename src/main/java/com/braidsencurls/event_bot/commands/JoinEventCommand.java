@@ -1,6 +1,7 @@
 package com.braidsencurls.event_bot.commands;
 
 import com.braidsencurls.event_bot.SharedData;
+import com.braidsencurls.event_bot.entities.Event;
 import com.braidsencurls.event_bot.exceptions.NoUserFoundException;
 import com.braidsencurls.event_bot.exceptions.UnauthorizedUserException;
 import com.braidsencurls.event_bot.repositories.UserRepositoryImpl;
@@ -12,9 +13,15 @@ import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.braidsencurls.event_bot.SendMessageGenerator.createReplyKeyboardMarkup;
+import static com.braidsencurls.event_bot.SendMessageGenerator.generate;
+
 public class JoinEventCommand implements  Command {
     private static final Logger LOGGER = LoggerFactory.getLogger(JoinEventCommand.class);
-    private UserService userService = new UserServiceImpl(new UserRepositoryImpl());
+    private static final UserService userService = new UserServiceImpl(new UserRepositoryImpl());
 
     @Override
     public String getTextCommand() {
@@ -30,13 +37,20 @@ public class JoinEventCommand implements  Command {
         if(CollectionUtils.isNotEmpty(SharedData.getInstance().getActiveEvents())) {
             responseText = "Choose the Event Id of the event you want to participate in\n" +
                     SharedData.getInstance().getAllFormattedEvents();
-            setNextState(chatId, "JOIN_EVENT");
+            initState(chatId, "JOIN_EVENT");
         }
 
-        SendMessage sendMessage = generateSendMessage(chatId, responseText);
-        sendMessage.setReplyMarkup(createReplyKeyboardMarkup());
+        return getSendMessage(chatId, responseText);
+    }
+
+    private static SendMessage getSendMessage(Long chatId, String responseText) {
+        SendMessage sendMessage = generate(chatId, responseText);
+        List<String> eventIds = SharedData.getInstance().getActiveEvents()
+                .stream().map(Event::getId).collect(Collectors.toList());
+        sendMessage.setReplyMarkup(createReplyKeyboardMarkup(eventIds));
         return sendMessage;
     }
+
     @Override
     public boolean isUserAuthorized(String username) {
         try {

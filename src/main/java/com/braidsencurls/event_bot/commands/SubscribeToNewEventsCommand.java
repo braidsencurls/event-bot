@@ -12,9 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import static com.braidsencurls.event_bot.SendMessageGenerator.generate;
+
 public class SubscribeToNewEventsCommand implements Command {
     private static final Logger LOGGER = LoggerFactory.getLogger(SubscribeToNewEventsCommand.class);
-    private UserService userService = new UserServiceImpl(new UserRepositoryImpl());
+    private static final UserService userService = new UserServiceImpl(new UserRepositoryImpl());
     private static final EventSubscribersRepository eventSubscribersRepository = new EventSubscribersRepositoryImpl();
 
     @Override
@@ -29,7 +31,7 @@ public class SubscribeToNewEventsCommand implements Command {
 
         eventSubscribersRepository.save(chatId);
         String responseText = "You will now be receiving notification everytime a new event is scheduled";
-        return generateSendMessage(chatId, responseText);
+        return generate(chatId, responseText);
     }
 
     @Override

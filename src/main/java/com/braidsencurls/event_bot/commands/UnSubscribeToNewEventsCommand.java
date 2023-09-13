@@ -12,9 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import static com.braidsencurls.event_bot.SendMessageGenerator.generate;
+
 public class UnSubscribeToNewEventsCommand implements Command {
     private static final Logger LOGGER = LoggerFactory.getLogger(UnSubscribeToNewEventsCommand.class);
-    private UserService userService = new UserServiceImpl(new UserRepositoryImpl());
+    private static final UserService userService = new UserServiceImpl(new UserRepositoryImpl());
     private static final EventSubscribersRepository eventSubscribersRepository = new EventSubscribersRepositoryImpl();
 
     @Override
@@ -33,7 +35,7 @@ public class UnSubscribeToNewEventsCommand implements Command {
             responseText = "You will no longer receive notifications everytime a new event is scheduled";
         }
 
-        return generateSendMessage(chatId, responseText);
+        return generate(chatId, responseText);
     }
 
     @Override

@@ -7,7 +7,6 @@ import com.braidsencurls.event_bot.exceptions.UnauthorizedUserException;
 import com.braidsencurls.event_bot.repositories.UserRepositoryImpl;
 import com.braidsencurls.event_bot.services.UserService;
 import com.braidsencurls.event_bot.services.UserServiceImpl;
-import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -19,30 +18,32 @@ import java.util.stream.Collectors;
 import static com.braidsencurls.event_bot.SendMessageGenerator.createReplyKeyboardMarkup;
 import static com.braidsencurls.event_bot.SendMessageGenerator.generate;
 
-public class ListEventAttendeesCommand implements Command {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ListEventAttendeesCommand.class);
+public class UpdateEventCommand implements Command {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UpdateEventCommand.class);
     private static final UserService userService = new UserServiceImpl(new UserRepositoryImpl());
 
     @Override
     public String getTextCommand() {
-        return "/listattendees";
+        return "/updateevent";
     }
 
     @Override
     public SendMessage execute(Update update) {
-        LOGGER.info("List All Attendees Command is Triggered");
+        LOGGER.info("Update Event Command is Triggered");
         Long chatId = update.getMessage().getChatId();
+        initState(chatId, "UPDATE_EVENT");
 
-        String responseText = "No active events at the moment";
-        if(CollectionUtils.isNotEmpty(SharedData.getInstance().getActiveEvents())) {
-            responseText = "Choose the Event Id of the event you want to check attendees\n" +
-                    SharedData.getInstance().getAllFormattedEvents();
-            SendMessage sendMessage = getSendMessage(chatId, responseText);
-            initState(chatId, "LIST_ATTENDEES");
-            return sendMessage;
-        }
+        return getSendMessage(chatId);
+    }
 
-        return generate(chatId, responseText);
+    private static SendMessage getSendMessage(Long chatId) {
+        SendMessage sendMessage = generate(chatId,"Select the Event Id of the event you would like to update.\n" +
+                SharedData.getInstance().getAllFormattedEvents());
+        List<String> eventIds = SharedData.getInstance().getActiveEvents()
+                .stream().map(Event::getId).collect(Collectors.toList());
+        sendMessage.setReplyMarkup(createReplyKeyboardMarkup(eventIds));
+        return sendMessage;
     }
 
     @Override
@@ -53,13 +54,5 @@ public class ListEventAttendeesCommand implements Command {
         } catch (NoUserFoundException e) {
             throw new UnauthorizedUserException("User is not authorized to perform this command");
         }
-    }
-
-    private SendMessage getSendMessage(Long chatId, String responseText) {
-        SendMessage sendMessage = generate(chatId, responseText);
-        List<String> eventIds = SharedData.getInstance().getActiveEvents()
-                .stream().map(Event::getId).collect(Collectors.toList());
-        sendMessage.setReplyMarkup(createReplyKeyboardMarkup(eventIds));
-        return sendMessage;
     }
 }

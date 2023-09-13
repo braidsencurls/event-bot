@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import static com.braidsencurls.event_bot.SendMessageGenerator.generate;
+
 public class ListEventsCommand implements Command {
 
     @Override
@@ -18,13 +20,13 @@ public class ListEventsCommand implements Command {
         return "/listevents";
     }
     private static final Logger LOGGER = LoggerFactory.getLogger(ListEventsCommand.class);
-    private UserService userService = new UserServiceImpl(new UserRepositoryImpl());
+    private static final UserService userService = new UserServiceImpl(new UserRepositoryImpl());
 
     @Override
     public SendMessage execute(Update update) {
         LOGGER.info("List All Events Command is Triggered");
         String formattedEvents = SharedData.getInstance().getAllFormattedEvents().toString();
-        return generateSendMessage(update.getMessage().getChatId(), formattedEvents);
+        return generate(update.getMessage().getChatId(), formattedEvents);
     }
 
     @Override

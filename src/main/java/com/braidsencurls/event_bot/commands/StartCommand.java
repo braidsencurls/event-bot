@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import static com.braidsencurls.event_bot.SendMessageGenerator.generate;
+
 public class StartCommand implements Command {
     private static final Logger LOGGER = LoggerFactory.getLogger(StartCommand.class);
 
@@ -21,6 +23,6 @@ public class StartCommand implements Command {
     @Override
     public SendMessage execute(Update update) {
         LOGGER.info("Start Command is Triggered");
-        return generateSendMessage(update.getMessage().getChatId(), "Hello There!");
+        return generate(update.getMessage().getChatId(), "Hello There!");
     }
 }

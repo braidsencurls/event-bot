@@ -14,10 +14,12 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.UUID;
 
+import static com.braidsencurls.event_bot.SendMessageGenerator.generate;
+
 public class CreateEventCommand implements Command {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(CreateEventCommand.class);
-    private UserService userService = new UserServiceImpl(new UserRepositoryImpl());
+    private static final Logger LOGGER = LoggerFactory.getLogger(CreateEventCommand.class);
+    private static final UserService userService = new UserServiceImpl(new UserRepositoryImpl());
 
     @Override
     public String getTextCommand() {
@@ -30,8 +32,8 @@ public class CreateEventCommand implements Command {
         Long chatId = update.getMessage().getChatId();
         String username = update.getMessage().getChat().getUserName();
         addEvent(chatId, username);
-        setNextState(chatId, "DESCRIBE_EVENT");
-        return generateSendMessage(chatId,"What is the event name?");
+        initState(chatId, "DESCRIBE_EVENT");
+        return generate(chatId,"What is the event name?");
     }
 
     @Override
