@@ -53,12 +53,7 @@ public class EventBotHandler implements RequestHandler<APIGatewayProxyRequestEve
             String text = update.getMessage().getText();
             String username = update.getMessage().getChat().getUserName();
 
-            Map<String, Command> commandRegistry = SharedData.getInstance().getCommandRegistry();
-            Command command = commandRegistry.get(text);
-            LOGGER.info("Is command null? " + (command == null));
-            command = command == null ? new ResponseCommand() :
-                    commandRegistry.get(text);
-
+            Command command = getCommand(text);
             command.isUserAuthorized(username);
             sendMessage = command.execute(update);
             SENDER.execute(sendMessage);
@@ -74,5 +69,12 @@ public class EventBotHandler implements RequestHandler<APIGatewayProxyRequestEve
             SENDER.execute(sendMessage);
             throw new RuntimeException("Failed to send message!", e);
         }
+    }
+
+    private static Command getCommand(String text) {
+        Map<String, Command> commandRegistry = SharedData.getInstance().getCommandRegistry();
+        Command command = commandRegistry.get(text);
+        return command == null ? new ResponseCommand() : command;
+
     }
 }

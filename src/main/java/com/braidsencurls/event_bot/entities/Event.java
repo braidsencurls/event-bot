@@ -99,7 +99,7 @@ public class Event {
                 "Description: " + description + LINE_BREAK +
                 "Location: " + location + LINE_BREAK +
                 "Date and Time: " + DateUtil.formatDateTime(dateTime, DATE_TIME_24_HOUR) + LINE_BREAK +
-                "Organizer: " + organizer;
+                "Organizer: " + "@" + organizer;
 
     }
 }

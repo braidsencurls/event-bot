@@ -1,0 +1,26 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto8 # Use the Java version you need
+
+  pre_build:
+    commands:
+      - echo "Installing Maven..."
+      - apt-get update
+      - apt-get install -y maven
+
+  build:
+    commands:
+      - echo "Building the Java project..."
+      - mvn clean install # You can adjust this to your Maven goals
+
+artifacts:
+  files:
+    - target/*.jar # Modify this to include the built JAR or other artifacts
+
+cache:
+  paths:
+    - ~/.m2/repository # Cache Maven dependencies
+

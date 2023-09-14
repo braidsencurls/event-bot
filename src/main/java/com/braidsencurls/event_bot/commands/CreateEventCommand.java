@@ -50,7 +50,7 @@ public class CreateEventCommand implements Command {
         Event newEvent = new Event();
         String eventId = UUID.randomUUID().toString();
         newEvent.setId(eventId);
-        newEvent.setOrganizer("@" + username);
+        newEvent.setOrganizer(username);
         saveTemporaryEvent(chatId, newEvent);
     }
 
