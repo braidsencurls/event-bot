@@ -16,9 +16,11 @@ phases:
       - echo "Building the Java project..."
       - mvn clean install # You can adjust this to your Maven goals
 
+
+
 artifacts:
   files:
-    - target/*.jar # Modify this to include the built JAR or other artifacts
+    - target/event-bot-1.0-SNAPSHOT # Modify this to include the built JAR or other artifacts
 
 cache:
   paths:

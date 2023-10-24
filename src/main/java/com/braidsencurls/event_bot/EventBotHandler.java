@@ -27,10 +27,10 @@ public class EventBotHandler implements RequestHandler<APIGatewayProxyRequestEve
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {LOGGER.info("Received message....");
+        LOGGER.info("Received: " + request);
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
         try {
             String messageBody = request.getBody();
-            LOGGER.info("Message Body: " + messageBody);
             Update update = MAPPER.readValue(messageBody, Update.class);
             handleUpdate(update);
             response.setStatusCode(200);

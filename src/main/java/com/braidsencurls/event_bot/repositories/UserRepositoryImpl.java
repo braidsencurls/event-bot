@@ -15,7 +15,7 @@ import java.util.*;
 public class UserRepositoryImpl implements UserRepository {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserRepositoryImpl.class);
-    private static final String USER_TABLE = "User";
+    private static final String USER_TABLE = "Event_User";
     private final DynamoDbClient dynamoDbClient = DynamoDBClient.getInstance().getDynamoDbClient();
 
 

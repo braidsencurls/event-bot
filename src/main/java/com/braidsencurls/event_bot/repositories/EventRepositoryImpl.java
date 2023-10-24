@@ -81,15 +81,15 @@ public class EventRepositoryImpl implements EventRepository {
                 .s(id)
                 .build());
 
-        ScanRequest queryReq = ScanRequest.builder()
+        QueryRequest queryReq = QueryRequest.builder()
                 .tableName(EVENT_TABLE)
-                .filterExpression( "id = :id")
+                .keyConditionExpression( "id = :id")
                 .expressionAttributeValues(attrValues)
                 .build();
 
         try {
-            ScanResponse response = dynamoDbClient.scan(queryReq);
-            List<Event> eventsResult = convertToEvent(response);
+            QueryResponse response = dynamoDbClient.query(queryReq);
+            List<Event> eventsResult = convertToEvent(response.items());
             return CollectionUtils.isNotEmpty(eventsResult) ? eventsResult.get(0) : null;
         } catch (DynamoDbException e) {
             LOGGER.error("Failed to find event with id: {}", id, e);
@@ -107,16 +107,24 @@ public class EventRepositoryImpl implements EventRepository {
                 .s(status)
                 .build());
 
-        ScanRequest queryReq = ScanRequest.builder()
+
+        QueryRequest queryReq = QueryRequest.builder()
                 .tableName(EVENT_TABLE)
-                .filterExpression("#status = :status")
-                .expressionAttributeNames(aliases)
-                .expressionAttributeValues(attrValues)
+                .indexName("status-index")
+                .keyConditionExpression("#status = :status")
+                .expressionAttributeNames(
+                        Collections.singletonMap("#status", "status")
+                )
+                .expressionAttributeValues(
+                        Collections.singletonMap(":status",
+                                AttributeValue.builder().s(status).build())
+                )
+                .limit(10)
                 .build();
 
         try {
-            ScanResponse response = dynamoDbClient.scan(queryReq);
-            List<Event> events = convertToEvent(response);
+            QueryResponse response = dynamoDbClient.query(queryReq);
+            List<Event> events = convertToEvent(response.items());
            return events;
         } catch (DynamoDbException e) {
             LOGGER.error("Failed to find all events", e);
@@ -124,15 +132,15 @@ public class EventRepositoryImpl implements EventRepository {
         }
     }
 
-    public static List<Event> convertToEvent(ScanResponse scanResponse) {
+    public static List<Event> convertToEvent(List<Map<String, AttributeValue>> items) {
         List<Event> events = new ArrayList<>();
 
-        if (CollectionUtils.isEmpty(scanResponse.items())) {
+        if (CollectionUtils.isEmpty(items)) {
             LOGGER.info("Items is empty");
             return events;
         }
 
-        for (Map<String, AttributeValue> eventItem : scanResponse.items()) {
+        for (Map<String, AttributeValue> eventItem : items) {
             String id = eventItem.get("id").s();
             String name = eventItem.get("name").s();
             String description = eventItem.get("description").s();
